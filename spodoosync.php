@@ -14,11 +14,17 @@ require_once 'spodoosync.civix.php';
  */
 function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $entity, $entity_id, $action) {
   if ($entity == 'civicrm_contact') {
-        $contact = civicrm_api3('Contact', 'getsingle', array('id' => $entity_id));
-        if ($contact['contact_type'] == 'Individual') {
-            $parameters['is_company'] = new xmlrpcval(true, 'boolean');
-        }
+    $contact = civicrm_api3('Contact', 'getsingle', array('id' => $entity_id));
+    if ($contact['contact_type'] == 'Individual') {
+      $parameters['is_company'] = new xmlrpcval(true, 'boolean');
     }
+  }
+}
+
+function spodoosync_civicrm_odoo_synchronisator(CRM_Odoosync_Model_ObjectDefinition $objectDefinition, &$synchronisator) {
+  if ($objectDefinition instanceof CRM_OdooContactSync_AddressDefinition) {
+    $synchronisator = 'CRM_Spodoosync_Synchronisator_AddressSynchronisator';
+  }
 }
 
 /**
@@ -50,8 +56,8 @@ function spodoosync_civicrm_install() {
   $error = false;
   $isOdooSyncInstalled = false;
   try {
-    $extensions = civicrm_api3('Extension', 'get');  
-    foreach($extensions['values'] as $ext) {
+    $extensions = civicrm_api3('Extension', 'get');
+    foreach ($extensions['values'] as $ext) {
       if ($ext['status'] == 'installed') {
         switch ($ext['key']) {
           case 'org.civicoop.odoosync':
@@ -59,17 +65,17 @@ function spodoosync_civicrm_install() {
             break;
         }
       }
-    }    
+    }
   } catch (Exception $e) {
     $error = true;
   }
-  
-  
+
+
   if ($error || !$isOdooSyncInstalled) {
     throw new Exception('This extension requires org.civicoop.odoosync');
   }
-  
-  
+
+
   return _spodoosync_civix_civicrm_install();
 }
 
