@@ -49,7 +49,8 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
     }
     
     
-    //an insert is impossible because we only sync primary addresses
+    //an insert is impossible because we only insert valid address types and we 
+    //update primary addresses at partner level
     //and store them at the partner entity in Odoo
     //throw new Exception('It is imposible to insert an address into Odoo');
     return -1; //a -1 ID means that the entity does not exist in Odoo
