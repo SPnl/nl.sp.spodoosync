@@ -12,11 +12,21 @@ require_once 'spodoosync.civix.php';
  * @param type $entity_id
  * @param type $action
  */
-function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $entity, $entity_id, $action) {
+function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $entity, $entity_id, $action) {
   if ($entity == 'civicrm_contact') {
     $contact = civicrm_api3('Contact', 'getsingle', array('id' => $entity_id));
     if ($contact['contact_type'] == 'Individual') {
       $parameters['is_company'] = new xmlrpcval(true, 'boolean');
+      $parameters['fristname'] = new xmlrpcval($contact['first_name'], 'string');
+      $parameters['prename'] = new xmlrpcval($contact['middle_name'], 'string');
+      $parameters['lastname'] = new xmlrpcval($contact['last_name'], 'string');
+      if (!empty($contact['individual_prefix'])) {
+        $parameters['title'] = new xmlrpcval($contact['individual_prefix'], 'string');
+      }
+      if (!empty($contact['birth_date'])) {
+        $birth_date = new DateTime($contact['birth_date']);
+        $parameters['birthdate'] = new xmlrpcval($birth_date->format('Y-m-d') ,'string');
+      }
     }
   }
 }
@@ -24,6 +34,9 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $entity, $entity
 function spodoosync_civicrm_odoo_synchronisator(CRM_Odoosync_Model_ObjectDefinition $objectDefinition, &$synchronisator) {
   if ($objectDefinition instanceof CRM_OdooContactSync_AddressDefinition) {
     $synchronisator = 'CRM_Spodoosync_Synchronisator_AddressSynchronisator';
+  }
+  if ($objectDefinition instanceof CRM_OdooContactSync_ContactDefinition) {
+    $synchronisator = 'CRM_Spodoosync_Synchronisator_ContactSynchronisator';
   }
 }
 
