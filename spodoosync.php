@@ -3,6 +3,51 @@
 require_once 'spodoosync.civix.php';
 
 /**
+ * Implementation of hook_civicrm_odoo_object_definition
+ * 
+ */
+function spodoosync_civicrm_odoo_object_definition(&$list) {
+  if (spodoosync_paymentarrangement()) {
+    $config = CRM_Paymentarrangement_Config::singleton();
+    $table_name = $config->getPaymentArrangementGroup('table_name');
+    $list[$table_name] = new CRM_PaymentArrangement_Definition();
+  }
+}
+
+/** 
+ * Implementation of hook_civicrm_custom
+ * 
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_custom
+ */
+function spodoosync_civicrm_custom($op,$groupID, $entityID, &$params ) {
+  if (spodoosync_paymentarrangement()) {  
+    //check if the group if the Payment arrangement group
+    $config = CRM_Paymentarrangement_Config::singleton();
+    if ($groupID == $config->getPaymentArrangementGroup('id')) {
+      //add the payment arrangement for syncing
+      if ($op == 'delete') {
+        //when deleting the params contains the id
+        $objectId = $params;
+      } else {
+        //first find the id for this custom value pair
+        $contributionParams = array();
+        $contributionParams['id'] = $entityID;
+        foreach($params as $param) {
+          $contributionParams['custom_'.$param['custom_field_id']] = $param['value'];
+          $contributionParams['return.custom_'.$param['custom_field_id']] = 1;
+        }
+        $contribution = civicrm_api3('Contribution', 'getsingle', $contributionParams);
+        //extract the custom value table id
+        $objectId = $contribution[$config->getPaymentArrangementGroup('table_name').'_id'];
+      }
+
+      $objects = CRM_Odoosync_Objectlist::singleton();
+      $objects->post($op,$config->getPaymentArrangementGroup('table_name'), $objectId);
+    }
+  }
+}
+
+/**
  * Implementation of hook_civicrm_odoo_alter
  * 
  * Through this hook we will make sure that every contact created in Odoo is a company (even if it is an individual)
@@ -38,6 +83,13 @@ function spodoosync_civicrm_odoo_synchronisator(CRM_Odoosync_Model_ObjectDefinit
   if ($objectDefinition instanceof CRM_OdooContactSync_ContactDefinition) {
     $synchronisator = 'CRM_Spodoosync_Synchronisator_ContactSynchronisator';
   }
+}
+
+function spodoosync_paymentarrangement() {
+  if (class_exists('CRM_Paymentarrangement_Config')) {
+    return true;
+  }
+  return false;
 }
 
 /**
