@@ -70,7 +70,7 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
       }
       if (!empty($contact['birth_date'])) {
         $birth_date = new DateTime($contact['birth_date']);
-        $parameters['birthdate'] = new xmlrpcval($birth_date->format('Y-m-d') ,'string');
+        $parameters['birthdate'] = new xmlrpcval($birth_date->format('d-m-Y') ,'string');
       }
     }
   }
