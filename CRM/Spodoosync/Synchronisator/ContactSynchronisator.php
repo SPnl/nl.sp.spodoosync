@@ -57,11 +57,11 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
   
   protected function findByContactType($contact) {
     $odoo_id = false;
-    if (!$odoo_id && in_array('SP_Provincie', $contact['contact_sub_type'])) {
+    if (!$odoo_id && is_array($contact['contact_sub_type']) && in_array('SP_Provincie', $contact['contact_sub_type'])) {
       $odoo_id = $this->findProvincie($contact);
     }
     
-    if (!$odoo_id && in_array('SP_Afdeling', $contact['contact_sub_type'])) {
+    if (!$odoo_id && is_array($contact['contact_sub_type']) && in_array('SP_Afdeling', $contact['contact_sub_type'])) {
       $odoo_id = $this->findAfdeling($contact);
     }
     
