@@ -4,13 +4,36 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
   
   public function findOdooId(CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $contact = $this->getContact($sync_entity->getEntityId());
-    $odoo_id = $this->findPartnerByAwareId($contact);
+    $odoo_id = $this->findPartnerByCiviCrmId($contact);
+    
+    if (!$odoo_id) {
+      $odoo_id = $this->findPartnerByAwareId($contact);
+    }
     
     if (!$odoo_id) {
       $odoo_id = $this->findByContactType($contact);
     }
     
     return $odoo_id;
+  }
+  
+  protected function findPartnerByCiviCrmId($contact) {
+    if (!empty($contact['id'])) {
+      //find by field aware_id
+      $key = array(
+      new xmlrpcval(array(
+        new xmlrpcval('civicrm_id', 'string'),
+        new xmlrpcval('=', 'string'),
+        new xmlrpcval($contact['id'], 'int'),
+      ), "array"));
+      
+      $result = $this->connector->search($this->getOdooResourceType(), $key);
+      
+      foreach($result as $id_element) {
+        return $id_element->scalarval();
+      }
+    }
+    return false;
   }
   
   protected function findPartnerByAwareId($contact) {
@@ -136,6 +159,18 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
     }
     
     return false;
+  }
+  
+  /**
+   * Returns the parameters to update/insert an Odoo object
+   * 
+   * @param type $contact
+   * @return \xmlrpcval
+   */
+  protected function getOdooParameters($contact, $entity, $entity_id, $action) {
+    $parameters = parent::getOdooParameters($contact, $entity, $entity_id, $action);
+    $parameters['civicrm_id'] = new xmlrpcval($contact['id'], 'int');
+    return $parameters;
   }
   
   
