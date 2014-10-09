@@ -161,18 +161,6 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
     return false;
   }
   
-  /**
-   * Returns the parameters to update/insert an Odoo object
-   * 
-   * @param type $contact
-   * @return \xmlrpcval
-   */
-  protected function getOdooParameters($contact, $entity, $entity_id, $action) {
-    $parameters = parent::getOdooParameters($contact, $entity, $entity_id, $action);
-    $parameters['civicrm_id'] = new xmlrpcval($contact['id'], 'int');
-    return $parameters;
-  }
-  
   
   
 }
