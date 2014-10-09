@@ -62,7 +62,7 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
     $contact = civicrm_api3('Contact', 'getsingle', array('id' => $entity_id));
     if ($contact['contact_type'] == 'Individual') {
       $parameters['is_company'] = new xmlrpcval(true, 'boolean');
-      $parameters['fristname'] = new xmlrpcval($contact['first_name'], 'string');
+      $parameters['firstname'] = new xmlrpcval($contact['first_name'], 'string');
       $parameters['prename'] = new xmlrpcval($contact['middle_name'], 'string');
       $parameters['lastname'] = new xmlrpcval($contact['last_name'], 'string');
       if (!empty($contact['individual_prefix'])) {
