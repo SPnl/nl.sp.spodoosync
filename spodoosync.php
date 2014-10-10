@@ -68,6 +68,7 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
         $parameters['payment_term'] = new xmlrpcval($payment_term, 'int');
       }
     }
+    var_dump($parameters); exit();
   }
   if ($entity == 'civicrm_contact') {
     $contact = civicrm_api3('Contact', 'getsingle', array('id' => $entity_id));
