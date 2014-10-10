@@ -18,7 +18,7 @@ class CRM_Spodoosync_PaymentInstrumentToOdooPaymentTerm {
   private function __construct() {
     $pi_gid = civicrm_api3('OptionGroup', 'getvalue', array('return' => 'id', 'name' => 'payment_instrument'));
     $pis = civicrm_api3('OptionValue', 'get', array('option_group_id' => $pi_gid));
-    foreach($pis as $pi) {
+    foreach($pis['values'] as $pi) {
       $this->payment_instruments[$pi['id']] = $pi;
     }
     
