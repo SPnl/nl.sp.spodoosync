@@ -60,6 +60,14 @@ function spodoosync_civicrm_custom($op,$groupID, $entityID, &$params ) {
 function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $entity, $entity_id, $action) {
   if ($entity == 'civicrm_contribution') {
     $parameters['civicrm_id'] = new xmlrpcval($entity_id, 'int');
+    $contribution = civicrm_api3('Contribution', 'getsingle', array('id' => $entity_id));
+    if (!empty($contribution['contribution_payment_instrument_id'])) {
+      $payment_instrument_to_payment_term = CRM_Spodoosync_PaymentInstrumentToOdooPaymentTerm::singleton();
+      $payment_term = $payment_instrument_to_payment_term->getOdooPaymentTerm($contribution['contribution_payment_instrument_id']);
+      if (!empty($payment_term)) {
+        $parameters['payment_term'] = new xmlrpcval($payment_term, 'int');
+      }
+    }
   }
   if ($entity == 'civicrm_contact') {
     $contact = civicrm_api3('Contact', 'getsingle', array('id' => $entity_id));
