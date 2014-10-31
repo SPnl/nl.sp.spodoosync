@@ -44,6 +44,13 @@ function spodoosync_civicrm_custom($op,$groupID, $entityID, &$params ) {
       $objects = CRM_Odoosync_Objectlist::singleton();
       $objects->post($op,$config->getPaymentArrangementGroup('table_name'), $objectId);
     }
+    if ($groupID == $config->getContactPaymentArrangementGroup('id')) {
+      if ($op == 'delete') {
+        $op = 'update'; //if this custom field is deleted it doesn't mean that the contact is deleted.
+      }
+      $objects = CRM_Odoosync_Objectlist::singleton();
+      $objects->post($op,'civicrm_contact', $entityID);
+    }
   }
 }
 
@@ -86,6 +93,24 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
         $parameters['birthdate'] = new xmlrpcval($birth_date->format('d-m-Y') ,'string');
       }
     }
+    
+    spodoosync_alter_parameters_contact_payment_arrangement($parameters, $entity_id);
+  }
+}
+
+function spodoosync_alter_parameters_contact_payment_arrangement(&$parameters, $contact_id) {
+  $config = CRM_Paymentarrangement_Config::singleton();
+  $apiParameters['id'] = $contact_id;
+  $apiParameters['return.custom_'.$config->getContactPaymentArrangementField('id')] = '1';
+  $apiParameters['return.custom_'.$config->getContactPaymentArrangementDetailsField('id')] = '1';
+  $contact = civicrm_api3('Contact', 'getsingle', $apiParameters);
+  
+  $payment_arrangement = $contact['custom_'.$config->getContactPaymentArrangementField('id')];
+  $payment_arrangement_details = $contact['custom_'.$config->getContactPaymentArrangementDetailsField('id')];
+  if ($payment_arrangement) {
+    $parameters['payment_note'] = new xmlrpcval($payment_arrangement_details, 'string');
+  } else {
+    $parameters['payment_note'] = new xmlrpcval('', 'string');
   }
 }
 
