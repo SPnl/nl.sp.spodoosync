@@ -45,7 +45,7 @@ function spodoosync_civicrm_custom($op,$groupID, $entityID, &$params ) {
       $objects->post($op,$config->getPaymentArrangementGroup('table_name'), $objectId);
     }
     if ($groupID == $config->getContactPaymentArrangementGroup('id')) {
-      $op = 'update'; //if this custom field is deleted it doesn't mean that the contact is deleted.
+      $op = 'edit'; //if this custom field is deleted it doesn't mean that the contact is deleted.
       $objects = CRM_Odoosync_Objectlist::singleton();
       $objects->post($op,'civicrm_contact', $entityID);
     }
