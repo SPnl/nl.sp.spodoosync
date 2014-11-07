@@ -10,7 +10,7 @@ class CRM_Spodoosync_PaymentInstrumentToOdooPaymentTerm {
   
   private $valid_payment_terms = array(
     'sp_acceptgiro' => 'accept giro',
-    'sp_automatischincasse' => 'automatische incasso',
+    'sp_automatischincasse' => 'Incasso opdracht',
   );
   
   private $connector;
