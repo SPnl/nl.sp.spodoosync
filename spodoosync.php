@@ -83,8 +83,25 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
       $parameters['firstname'] = new xmlrpcval($contact['first_name'], 'string');
       $parameters['prename'] = new xmlrpcval($contact['middle_name'], 'string');
       $parameters['lastname'] = new xmlrpcval($contact['last_name'], 'string');
+      
+      $title = false;
       if (!empty($contact['individual_prefix'])) {
-        $parameters['title'] = new xmlrpcval($contact['individual_prefix'], 'string');
+        $title = $contact['individual_prefix'];
+      } elseif (!empty($contact['gender'])) {
+        switch ($contact['gender']) {
+          case 'Female':
+            $title = 'Mevr.';
+            break;
+          case 'Male':
+            $title = 'Dhr.';
+            break;
+        }
+      }
+      if ($title) {
+        $title_id = CRM_Spodoosync_PrefixToTitle::getOdooId($title);
+        if ($title_id) {
+          $parameters['title'] = new xmlrpcval($title_id, 'int');
+        }
       }
       if (!empty($contact['birth_date'])) {
         $birth_date = new DateTime($contact['birth_date']);
