@@ -4,6 +4,11 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
   
   public function isThisItemSyncable(CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $address = $this->getAddress($sync_entity->getEntityId());
+    
+    if (empty($address['contact_id'])) {
+      return false;
+    }
+    
     //only sync primary addresses
     if ($address['is_primary']) {
       return true;
