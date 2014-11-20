@@ -76,6 +76,7 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
     }
   }
   if ($entity == 'civicrm_contact') {
+    unset($parameters['title']);
     $contact = civicrm_api3('Contact', 'getsingle', array('id' => $entity_id));
     $parameters['civicrm_id'] = new xmlrpcval($contact['id'], 'int');
     if ($contact['contact_type'] == 'Individual') {
