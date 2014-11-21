@@ -13,7 +13,7 @@ class CRM_Spodoosync_PrefixToTitle {
   public static function getOdooId($title) {
     $keys = array(
         new xmlrpcval(array(
-          new xmlrpcval('title', 'string'),
+          new xmlrpcval('name', 'string'),
           new xmlrpcval('=', 'string'),
           new xmlrpcval($title, 'string'),
         ), "array"),
@@ -31,7 +31,7 @@ class CRM_Spodoosync_PrefixToTitle {
     }
     
     //try to create a title
-    $parameters['title'] = new xmlrpcval($title, 'string');
+    $parameters['name'] = new xmlrpcval($title, 'string');
     $parameters['domain'] = new xmlrpcval('partner', 'string');
     $odoo_id = $connector->create('res.partner.title', $parameters);
     if ($odoo_id) {
