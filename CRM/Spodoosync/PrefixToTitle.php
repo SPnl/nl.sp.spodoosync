@@ -20,7 +20,7 @@ class CRM_Spodoosync_PrefixToTitle {
         new xmlrpcval(array(
           new xmlrpcval('domain', 'string'),
           new xmlrpcval('=', 'string'),
-          new xmlrpcval('company', 'string'),
+          new xmlrpcval('partner', 'string'),
         ), "array"),
     );
     
@@ -32,7 +32,7 @@ class CRM_Spodoosync_PrefixToTitle {
     
     //try to create a title
     $parameters['title'] = new xmlrpcval($title, 'string');
-    $parameters['domain'] = new xmlrpcval('company', 'string');
+    $parameters['domain'] = new xmlrpcval('partner', 'string');
     $odoo_id = $connector->create('res.partner.title', $parameters);
     if ($odoo_id) {
       return $odoo_id;
