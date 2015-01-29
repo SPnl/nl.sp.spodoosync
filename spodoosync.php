@@ -76,6 +76,9 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
     }
   }
   if ($entity == 'civicrm_contact') {
+    //sync field retour post
+    CRM_Spodoosync_RetourPost::syncRetourPostToOdoo($entity_id, $parameters);
+
     unset($parameters['title']);
     $contact = civicrm_api3('Contact', 'getsingle', array('id' => $entity_id));
     $parameters['civicrm_id'] = new xmlrpcval($contact['id'], 'int');
