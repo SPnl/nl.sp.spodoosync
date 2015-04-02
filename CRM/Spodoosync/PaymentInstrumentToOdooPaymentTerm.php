@@ -9,8 +9,9 @@ class CRM_Spodoosync_PaymentInstrumentToOdooPaymentTerm {
   private $payment_instruments = array();
   
   private $valid_payment_terms = array(
-    'sp_acceptgiro' => 'accept giro',
+    'sp_acceptgiro' => 'Acceptgiro',
     'sp_automatischincasse' => 'Direct debit',
+    'Creditcard' => 'Credit Card'
   );
   
   private $connector;
@@ -19,7 +20,7 @@ class CRM_Spodoosync_PaymentInstrumentToOdooPaymentTerm {
     $pi_gid = civicrm_api3('OptionGroup', 'getvalue', array('return' => 'id', 'name' => 'payment_instrument'));
     $pis = civicrm_api3('OptionValue', 'get', array('option_group_id' => $pi_gid));
     foreach($pis['values'] as $pi) {
-      $this->payment_instruments[$pi['id']] = $pi;
+      $this->payment_instruments[$pi['value']] = $pi;
     }
     
     $this->connector = CRM_Odoosync_Connector::singleton();
