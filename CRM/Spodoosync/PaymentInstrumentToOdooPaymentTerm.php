@@ -11,7 +11,8 @@ class CRM_Spodoosync_PaymentInstrumentToOdooPaymentTerm {
   private $valid_payment_terms = array(
     'sp_acceptgiro' => 'Acceptgiro',
     'sp_automatischincasse' => 'Direct debit',
-    'Creditcard' => 'Credit Card'
+    'Creditcard' => 'Credit Card',
+    'Periodieke overboeking' => 'Periodieke overboeking',
   );
   
   private $connector;
