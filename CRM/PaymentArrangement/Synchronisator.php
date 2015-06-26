@@ -32,14 +32,16 @@ class CRM_PaymentArrangement_Synchronisator extends CRM_Odoosync_Model_ObjectSyn
   public function save(CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $data = $this->getData($sync_entity->getEntityId());
     $odoo_invoice_id = $sync_entity->findOdooIdByEntity('civicrm_contribution', $data['contribution_id']);
-    $parameters = $this->getOdooParameters($data, $odoo_invoice_id, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'create');
-    $odoo_id = $this->connector->write($this->getOdooResourceType(), $odoo_invoice_id, $parameters);
-    if ($odoo_id) {
-      return $odoo_invoice_id;
+    if ($odoo_invoice_id > 0) {
+      $parameters = $this->getOdooParameters($data, $odoo_invoice_id, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'create');
+      $odoo_id = $this->connector->write($this->getOdooResourceType(), $odoo_invoice_id, $parameters);
+      if ($odoo_id) {
+        return $odoo_invoice_id;
+      }
     }
-    CRM_Core_Error::debug_log_message('Save payment arrangment: '.var_export($parameters, true));
+    CRM_Core_Error::debug_log_message('Save payment arrangment (Invoice: '.var_export($odoo_invoice_id, true).'): '.var_export($parameters, true));
     throw new Exception('Could not update payment arrangement into Odoo');
-  }
+    }
   
   /**
    * Insert a civicrm entity into Odoo
