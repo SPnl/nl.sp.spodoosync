@@ -22,10 +22,11 @@ class CRM_PaymentArrangement_Synchronisator extends CRM_Odoosync_Model_ObjectSyn
   public function isThisItemSyncable(CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $data = $this->getData($sync_entity->getEntityId());
     $odoo_invoice_id = $sync_entity->findOdooIdByEntity('civicrm_contribution', $data['contribution_id']);
-    if (!$odoo_invoice_id) {
-      return false;
+    CRM_Core_Error::debug_log_message('Is payment arrangement syncable: '.var_export($odoo_invoice_id, true));
+    if ($odoo_invoice_id > 0) {
+      return true;
     }
-    return true;
+    return false;
   }
   
   public function save(CRM_Odoosync_Model_OdooEntity $sync_entity) {
@@ -36,6 +37,7 @@ class CRM_PaymentArrangement_Synchronisator extends CRM_Odoosync_Model_ObjectSyn
     if ($odoo_id) {
       return $odoo_invoice_id;
     }
+    CRM_Core_Error::debug_log_message('Save payment arrangment: '.var_export($parameters, true));
     throw new Exception('Could not update payment arrangement into Odoo');
   }
   
