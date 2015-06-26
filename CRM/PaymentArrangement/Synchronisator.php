@@ -20,6 +20,11 @@ class CRM_PaymentArrangement_Synchronisator extends CRM_Odoosync_Model_ObjectSyn
    * subclasses should implement this function to make items syncable
    */
   public function isThisItemSyncable(CRM_Odoosync_Model_OdooEntity $sync_entity) {
+    $data = $this->getData($sync_entity->getEntityId());
+    $odoo_invoice_id = $sync_entity->findOdooIdByEntity('civicrm_contribution', $data['contribution_id']);
+    if (!$odoo_invoice_id) {
+      return false;
+    }
     return true;
   }
   
