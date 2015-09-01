@@ -111,6 +111,9 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
         $birth_date = new DateTime($contact['birth_date']);
         $parameters['birthdate'] = new xmlrpcval($birth_date->format('d-m-Y') ,'string');
       }
+
+      $initials = CRM_Spodoosync_Initials::getInitialsForContact($entity_id);
+      $parameters = new xmlrpcval($initials, 'string');
     }
     
     spodoosync_alter_parameters_contact_payment_arrangement($parameters, $entity_id);
