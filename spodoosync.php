@@ -113,7 +113,7 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
       }
 
       $initials = CRM_Spodoosync_Initials::getInitialsForContact($entity_id);
-      $parameters = new xmlrpcval($initials, 'string');
+      $parameters['initials'] = new xmlrpcval($initials, 'string');
     }
     
     spodoosync_alter_parameters_contact_payment_arrangement($parameters, $entity_id);
