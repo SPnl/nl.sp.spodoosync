@@ -143,6 +143,9 @@ function spodoosync_civicrm_odoo_synchronisator(CRM_Odoosync_Model_ObjectDefinit
   if ($objectDefinition instanceof CRM_OdooContactSync_ContactDefinition) {
     $synchronisator = 'CRM_Spodoosync_Synchronisator_ContactSynchronisator';
   }
+  if ($objectDefinition instanceof CRM_OdooContributionSync_ContributionDefinition) {
+    $synchronisator = 'CRM_Spodoosync_Synchronisator_ContributionSynchronisator';
+  }
 }
 
 function spodoosync_paymentarrangement() {
