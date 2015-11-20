@@ -63,7 +63,7 @@ function spodoosync_civicrm_custom($op,$groupID, $entityID, &$params ) {
  * @param type $action
  */
 function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $entity, $entity_id, $action) {
-  if ($entity == 'civicrm_contribution') {
+  if ($entity == 'civicrm_contribution' && $action != 'credit') {
     $parameters['civicrm_id'] = new xmlrpcval($entity_id, 'int');
     $parameters['payment_term'] = new xmlrpcval(0, 'int');
     $contribution = civicrm_api3('Contribution', 'getsingle', array('id' => $entity_id));
@@ -72,6 +72,15 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
       $payment_term = $payment_instrument_to_payment_term->getOdooPaymentTerm($contribution['instrument_id']);
       if (!empty($payment_term)) {
         $parameters['payment_term'] = new xmlrpcval($payment_term, 'int');
+      }
+    }
+  } elseif ($entity == 'civicrm_contribution' && $action == 'credit') {
+    $parameters['payment_term'] = new xmlrpcval(18, 'int'); //verrekenen
+    if ($entity_id) {
+      $contribution = civicrm_api3('Contribution', 'getsingle', array('id' => $entity_id));
+      $refund_option_value = CRM_Core_OptionGroup::getValue('contribution_status', 'Refunded', 'name');
+      if ($contribution['contribution_status_id'] == $refund_option_value) {
+        $parameters['payment_term'] = new xmlrpcval(17, 'int'); //terugbetalen
       }
     }
   }
