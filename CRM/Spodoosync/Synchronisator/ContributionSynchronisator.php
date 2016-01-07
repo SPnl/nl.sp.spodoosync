@@ -17,6 +17,9 @@ class CRM_Spodoosync_Synchronisator_ContributionSynchronisator extends CRM_OdooC
       if (!($receive_date->format('Y') >= 2015)) {
         $return = FALSE;
         $doDelete = TRUE;
+      } elseif ($contribution['contribution_status_id'] == CRM_Core_OptionGroup::getValue('contribution_status', 'Refunded', 'name')) {
+        $return = FALSE;
+        $doDelete = TRUE;
       } elseif ($this->checkEventContribution($contribution)) {
         $return = false;
         $doDelete = true;
