@@ -76,6 +76,7 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
     }
   } elseif ($entity == 'civicrm_contribution' && $action == 'credit') {
     $parameters['payment_term'] = new xmlrpcval(18, 'int'); //verrekenen
+    $parameters['civicrm_id'] = new xmlrpcval($entity_id, 'int');
     if ($entity_id) {
       $contribution = civicrm_api3('Contribution', 'getsingle', array('id' => $entity_id));
       $refund_option_value = CRM_Core_OptionGroup::getValue('contribution_status', 'Refunded', 'name');
