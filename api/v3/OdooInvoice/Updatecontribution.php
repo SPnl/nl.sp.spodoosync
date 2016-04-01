@@ -34,6 +34,6 @@ function civicrm_api3_odoo_invoice_updatecontribution($params) {
       'amount' => $params['total_amount']));
   }
 
-  return _civicrm_api3_basic_create(_civicrm_api3_get_BAO(__FUNCTION__), $params, 'Contribution');
+  return _civicrm_api3_basic_create('CRM_Contribute_BAO_Contribution', $params, 'Contribution');
 }
 
