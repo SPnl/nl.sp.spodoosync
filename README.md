@@ -11,6 +11,8 @@ Functionality
 CiviCRM Contact to Odoo Partner synchronisation
 -----------------------------------------------
 
+CiviCRM Contacts are only synchronized when the field Contact in Odoo is set to yes.
+
 This module alters the following **contact** parameters to be pushed to Odoo
 
 - Stores Individuals as a company in Odoo because that is what the SP is using for multiple addresses.
