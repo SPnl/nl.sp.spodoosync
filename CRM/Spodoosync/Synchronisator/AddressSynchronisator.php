@@ -8,6 +8,10 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
     if (empty($address['contact_id'])) {
       return false;
     }
+    $odoo_partner_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $address['contact_id']);
+    if ($odoo_partner_id <= 0) {
+      return false;
+    }
     
     //only sync primary addresses
     if ($address['is_primary']) {

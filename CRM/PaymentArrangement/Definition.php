@@ -36,7 +36,7 @@ class CRM_PaymentArrangement_Definition extends CRM_Odoosync_Model_ObjectDefinit
     try {
       if (is_array($data) && isset($data['contribution_id'])) {
          $contribution_id = $data['contribution_id'];
-         $dep[] = new CRM_Odoosync_Model_Dependency('civicrm_contribution', $contribution_id);
+         $dep[] = new CRM_Odoosync_Model_Dependency('civicrm_contribution', $contribution_id, +5);
       }
     } catch (Exception $ex) {
        //do nothing

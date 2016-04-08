@@ -1,7 +1,62 @@
 <?php
 
 class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContactSync_ContactSynchronisator {
-  
+
+  public function isThisItemSyncable(CRM_Odoosync_Model_OdooEntity $sync_entity) {
+    // Check whether Contact in Odoo is set to yes.
+    if (!$this->checkContactInOdoo($sync_entity->getEntityId())) {
+      return false;
+    }
+
+    if (!parent::isThisItemSyncable($sync_entity)) {
+      $this->updateContactInOdoo($sync_entity->getEntityId(), false, ts('Contact is not syncable'));
+      return false;
+    }
+
+    $this->updateContactInOdoo($sync_entity->getEntityId(), true, '');
+
+    return true;
+  }
+
+  /**
+   * Returns whether the field Contact in Odoo is set to yes.
+   *
+   * @param $contact_id
+   * @return bool
+   */
+  protected function checkContactInOdoo($contact_id) {
+    $sql = "SELECT `in_odoo` FROM `civicrm_value_odoo_contact` WHERE `entity_id` = %1";
+    $params[1] = array($contact_id, 'Integer');
+    $contact_in_odoo = CRM_Core_DAO::singleValueQuery($sql, $params);
+    return $contact_in_odoo ? true : false;
+  }
+
+  /**
+   * Update the Contact in Odoo field.
+   *
+   * @param $contact_id
+   * @param $in_odoo
+   * @param null $status
+   */
+  protected function updateContactInOdoo($contact_id, $in_odoo, $status=null) {
+    $sql = "SELECT `id` FROM `civicrm_value_odoo_contact` WHERE `entity_id` = %1";
+    $params[1] = array($contact_id, 'Integer');
+    $id = CRM_Core_DAO::singleValueQuery($sql, $params);
+    if ($id) {
+      $update_params[1] = array($id, 'Integer');
+      $update_params[2] = array($in_odoo ? 1 : 0, 'Integer');
+      $update_params[3] = array($status ? $status : '', 'String');
+      $sql = "UPDATE `civicrm_value_odoo_contact` SET `in_odoo` = %2, `status` = %3 WHERE `id` = %1";
+      CRM_Core_DAO::executeQuery($sql, $update_params);
+    } else {
+      $insert_params[1] = array($contact_id, 'Integer');
+      $insert_params[2] = array($in_odoo ? '1' : '0', 'Integer');
+      $insert_params[3] = array($status ? $status : '', 'String');
+      $sql = "INSERT INTO `civicrm_value_odoo_contact` (`entity_id`, `in_odoo`, `status`) VALUES (%1, %2, %3)";
+      CRM_Core_DAO::executeQuery($sql, $insert_params);
+    }
+  }
+
   public function findOdooId(CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $contact = $this->getContact($sync_entity->getEntityId());
     $odoo_id = $this->findPartnerByCiviCrmId($contact);

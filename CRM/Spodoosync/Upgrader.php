@@ -7,10 +7,33 @@ class CRM_Spodoosync_Upgrader extends CRM_Spodoosync_Upgrader_Base {
 
   public function install() {
     $this->addPaymentInstruments();
+    $this->executeCustomDataFile('xml/odoo.xml');
   }
   
   public function upgrade_1001() {
     $this->addPaymentInstruments();
+    return true;
+  }
+
+  /**
+   * Upgrade for version 1.3 - step 1
+   *
+   * Create custom fields.
+   */
+  public function upgrade_1301() {
+    //add Contact in Odoo custom field for all contacts
+    $this->executeCustomDataFile('xml/odoo.xml');
+    return true;
+  }
+
+  /**
+   * Upgrade for version 1.3 - step 2
+   *
+   * Set Contact in Odoo to yes when contact is already pushed.
+   */
+  public function upgrade_1302() {
+    $sql = "INSERT INTO `civicrm_value_odoo_contact` (`entity_id`, `in_odoo`) SELECT o.`entity_id`, 1 AS in_odoo FROM `civicrm_odoo_entity` o WHERE `entity` = 'civicrm_contact' AND `status` = 'SYNCED'";
+    CRM_Core_DAO::executeQuery($sql);
     return true;
   }
   

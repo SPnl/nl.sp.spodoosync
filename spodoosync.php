@@ -158,11 +158,52 @@ function spodoosync_civicrm_odoo_synchronisator(CRM_Odoosync_Model_ObjectDefinit
   }
 }
 
+function spodoosync_civicrm_odoo_object_definition_dependency(&$deps, CRM_Odoosync_Model_ObjectDefinition $def, $entity_id, $action, $data=false) {
+  if ($def instanceof CRM_OdooContributionSync_ContributionDefinition) {
+    if (is_array($data) && isset($data['contact_id'])) {
+      $contact_id = $data['contact_id'];
+    } else {
+      try {
+        $contact_id = civicrm_api3('Contribution', 'getvalue', array('return' => 'contact_id', 'id' => $entity_id));
+      } catch (Exception $e) {
+        return;
+      }
+    }
+
+    _spodoosync_get_odoo_contribution_dependencies($deps, $entity_id);
+  }
+}
+
+/**
+ * Set dependencies for a contribution object for syncing with Odoo
+ *
+ * @param $deps
+ * @param $contribution_id
+ */
+function _spodoosync_get_odoo_contribution_dependencies(&$deps, $contribution_id) {
+  if (spodoosync_paymentarrangement()) {
+    $config = CRM_Paymentarrangement_Config::singleton();
+    $sql = "SELECT `id` FROM `".$config->getPaymentArrangementGroup('table_name')."` WHERE `entity_id` = %1";
+    $dao = CRM_Core_DAO::executeQuery($sql, array(1 => array($contribution_id, 'Integer')));
+    if ($dao->fetch() && $dao->id) {
+      $deps[] = new CRM_Odoosync_Model_Dependency($config->getPaymentArrangementGroup('table_name'), $dao->id);
+    }
+  }
+}
+
 function spodoosync_paymentarrangement() {
   if (class_exists('CRM_Paymentarrangement_Config')) {
     return true;
   }
   return false;
+}
+
+function spodoosync_civicrm_buildForm($formName, &$form) {
+  CRM_Spodoosync_ContactInOdoo::buildForm($formName, $form);
+}
+
+function spodoosync_civicrm_validateForm($formName, &$fields, &$files, &$form, &$errors) {
+  CRM_Spodoosync_ContactInOdoo::validateForm($formName, $fields, $files, $form, $errors);
 }
 
 /**
