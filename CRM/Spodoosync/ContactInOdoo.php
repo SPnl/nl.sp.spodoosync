@@ -31,6 +31,9 @@ class CRM_Spodoosync_ContactInOdoo {
    * @return bool
    */
   protected static function checkContactInOdoo($contact_id) {
+    if (!$contact_id) {
+      return false;
+    }
     $sql = "SELECT `in_odoo` FROM `civicrm_value_odoo_contact` WHERE `entity_id` = %1";
     $params[1] = array($contact_id, 'Integer');
     $contact_in_odoo = CRM_Core_DAO::singleValueQuery($sql, $params);
@@ -57,9 +60,11 @@ class CRM_Spodoosync_ContactInOdoo {
       if (isset($groupTree[$groupId]) && isset($groupTree[$groupId]['fields'][$fieldId])) {
         $elementName = $groupTree[$groupId]['fields'][$fieldId]['element_name'];
         $value = $groupTree[$groupId]['fields'][$fieldId]['element_value'];
-        $element = $form->getElement($elementName);
-        if ($value) {
-          $element->freeze();
+        if ($form->elementExists($elementName)) {
+          $element = $form->getElement($elementName);
+          if ($value) {
+            $element->freeze();
+          }
         }
       }
     }
