@@ -71,19 +71,13 @@ class CRM_Spodoosync_ContactInOdoo {
   }
   
   protected static function getCustomGroupId() {
-    return civicrm_api3('CustomGroup', 'getvalue', array(
-      'return' => 'id',
-      'name' => 'odoo',
-    ));
+    $cfsp = CRM_Spgeneric_CustomField::singleton();
+    return $cfsp->getGroupId('odoo');
   }
 
   protected static function getCustomFieldId() {
-    $groupId = self::getCustomGroupId();
-    return civicrm_api3('CustomField', 'getvalue', array(
-      'return' => 'id',
-      'name' => 'in_odoo',
-      'custom_group_id' => $groupId
-    ));
+    $cfsp = CRM_Spgeneric_CustomField::singleton();
+    return $cfsp->getFieldId('odoo', 'in_odoo');
   }
 
 }

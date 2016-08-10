@@ -6,8 +6,8 @@ class CRM_Spodoosync_Initials {
 
   private static function getCustomFieldId() {
     if (!isset(self::$customFieldId)) {
-      $customGroupId = civicrm_api3('CustomGroup', 'getvalue', array('return' => 'id', 'name' => 'Migratie_Contacten'));
-      self::$customFieldId = civicrm_api3('CustomField', 'getvalue', array('return' => 'id', 'name' => 'Voorletters', 'custom_group_id' => $customGroupId));
+      $cfsp = CRM_Spgeneric_CustomField::singleton();
+      self::$customFieldId = $cfsp->getFieldId('Migratie_Contacten', 'Voorletters');
     }
     return self::$customFieldId;
   }

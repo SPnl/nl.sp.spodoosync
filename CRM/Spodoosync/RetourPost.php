@@ -15,10 +15,11 @@ class CRM_Spodoosync_RetourPost {
 
     protected function __construct() {
         try {
-            $this->migratie_set = civicrm_api3('CustomGroup', 'getsingle', array('name' => 'Migratie_Contacten'));
-            $this->retourpost_field = civicrm_api3('CustomField', 'getsingle', array('custom_group_id' => $this->migratie_set['id'], 'name' => 'Retourpost'));
+          $cfsp = CRM_Spgeneric_CustomField::singleton();
+          $this->migratie_set = $cfsp->getGroupByName('Migratie_Contacten');
+          $this->retourpost_field = $cfsp->getField('Migratie_Contacten', 'Retourpost');
         } catch (Exception $e) {
-            //do nothing
+          // do nothing
         }
     }
 
