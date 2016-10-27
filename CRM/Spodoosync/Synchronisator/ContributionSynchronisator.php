@@ -2,6 +2,45 @@
 
 class CRM_Spodoosync_Synchronisator_ContributionSynchronisator extends CRM_OdooContributionSync_ContributionSynchronisator {
 
+  private $openBookYears = array();
+
+  /**
+   * Returns true if the book year exist in odoo and wether the book year is open and
+   * available for bookings in the SP context
+   *
+   * @param int $year
+   * @return int|false
+   */
+  protected function isBookYearAvailableForSP($year) {
+    //check if currency id exist in cache
+    //if not try to retrieve it from Odoo
+    if (!isset($this->openBookYears[$year])) {
+      $keys = array(
+        new xmlrpcval(array(
+          new xmlrpcval('name', 'string'),
+          new xmlrpcval('=', 'string'),
+          new xmlrpcval($year, 'string'),
+        ), "array"),
+        new xmlrpcval(array(
+          new xmlrpcval('civicrm_block_fiscal_year', 'string'),
+          new xmlrpcval('=', 'string'),
+          new xmlrpcval(false, 'boolean'),
+        ), "array"),
+      );
+
+      $ids = $this->connector->search('account.fiscalyear', $keys);
+      foreach ($ids as $id_element) {
+        $this->openBookYears[$year] = true;
+        break;
+      }
+      if (!isset($this->openBookYears[$year])) {
+        $this->openBookYears[$year] = false;
+      }
+    }
+
+    return $this->openBookYears[$year];
+  }
+
   public function isThisItemSyncable(CRM_Odoosync_Model_OdooEntity $sync_entity) {
 
     //to test we return false so no contributions are synced to Odoo
@@ -26,6 +65,9 @@ class CRM_Spodoosync_Synchronisator_ContributionSynchronisator extends CRM_OdooC
       } elseif (!CRM_Spodoosync_Membership_CheckMembership::checkContributionForMembershipStatus($contribution)) {
         $return = false;
         $doDelete = false;
+      } elseif (!$this->isBookYearAvailableForSP($receive_date->format('Y'))) {
+        $return = FALSE;
+        $doDelete = FALSE;
       }
     }
     if (!$return && $doDelete && $sync_entity->getOdooId()) {
