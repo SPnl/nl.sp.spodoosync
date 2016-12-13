@@ -40,6 +40,9 @@ class CRM_Spodoosync_Synchronisator_ContributionSynchronisator extends CRM_OdooC
     if ($receive_date->format('Y') < 2015) {
       throw new Exception('Do not sync invoices before 2015');
     }
+    if (!$this->checkDirectDebitAndLinkedMandate($contribution)) {
+      throw new Exception('No mandate linked');
+    }
     return parent::performInsert($sync_entity);
   }
 
@@ -50,7 +53,21 @@ class CRM_Spodoosync_Synchronisator_ContributionSynchronisator extends CRM_OdooC
       $this->performDelete($odoo_id, $sync_entity);
       throw new Exception('Do not sync invoices before 2015');
     }
+    if (!$this->checkDirectDebitAndLinkedMandate($contribution)) {
+      throw new Exception('No mandate linked');
+    }
     return parent::performUpdate($odoo_id, $sync_entity);
+  }
+
+  protected function checkDirectDebitAndLinkedMandate($contribution) {
+    $config = CRM_Spodoosync_Config::singleton();
+    if (!empty($contribution['instrument_id']) && $contribution['instrument_id'] == $config->direct_debit_payment_instrument_id) {
+      // Check whether the mandate field is set
+      if (!sepamandaat_get_odoo_id_for_contribution_id($contribution['id'])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   protected function checkEventContribution($contribution) {
