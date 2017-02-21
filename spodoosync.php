@@ -219,6 +219,11 @@ function spodoosync_paymentarrangement() {
 
 function spodoosync_civicrm_buildForm($formName, &$form) {
   CRM_Spodoosync_ContactInOdoo::buildForm($formName, $form);
+
+  if ($formName == 'CRM_Contact_Form_Merge') {
+    // add a form validation rule when contacts are merged
+    $form->addFormRule(array('CRM_Spodoosync_ContactInOdoo', 'mergeFormRule'), $form);
+  }
 }
 
 function spodoosync_civicrm_validateForm($formName, &$fields, &$files, &$form, &$errors) {

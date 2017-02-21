@@ -24,13 +24,24 @@ class CRM_Spodoosync_ContactInOdoo {
     }
   }
 
+  public static function mergeFormRule($fields, $files, $self) {
+    $errors = array();
+
+    // check if left contact has "sync with odoo = yes"
+    if (CRM_Spodoosync_ContactInOdoo::checkContactInOdoo($self->_oid)) {
+      $errors['_qf_default'] = ts("Het contact aan de linkerkant bestaat in Odoo. Samenvoegen niet toegelaten!");
+    }
+
+    return $errors;
+  }
+
   /**
    * Returns whether the field Contact in Odoo is set to yes.
    *
    * @param $contact_id
    * @return bool
    */
-  protected static function checkContactInOdoo($contact_id) {
+  public static function checkContactInOdoo($contact_id) {
     if (!$contact_id) {
       return false;
     }
