@@ -88,6 +88,25 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
   if ($entity == 'civicrm_contact') {
     //sync field retour post
     CRM_Spodoosync_RetourPost::syncRetourPostToOdoo($entity_id, $parameters);
+    // Sync field geen_post and reden_geen_post
+    $geenpost = false;
+    $geenpost_reden = '';
+    $geenpost_dao = CRM_Core_DAO::executeQuery("SELECT geen_post, reden_geen_post FROM civicrm_value_communicatie WHERE entity_id", array(1=>$entity_id, 'Integer'));
+    if ($geenpost_dao->fetch()) {
+      if ($geenpost_dao->geen_post) {
+        $geenpost = true;
+      }
+      if ($geenpost_dao->reden_geen_post) {
+        $geenpost_reden = CRM_Core_DAO::singleValueQuery("
+          SELECT label FROM civicrm_option_value 
+          INNER JOIN civicrm_option_group ON civicrm_option_value.option_group_id = civicrm_option_group.id 
+          WHERE civicrm_option_group.name = 'reden_geen_post' AND civicrm_option_value.value =%1",
+          array(1=>array($geenpost_dao->reden_geen_post, 'String'))
+        );
+      }
+    }
+    $parameters['geenpost'] = new xmlrpcval($geenpost, 'boolean');
+    $parameters['geenpost_reden'] = new xmlrpcval($geenpost_reden, 'string');
 
     unset($parameters['title']);
     $contact = civicrm_api3('Contact', 'getsingle', array('id' => $entity_id));
