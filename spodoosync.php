@@ -20,6 +20,7 @@ function spodoosync_civicrm_odoo_object_definition(&$list) {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_custom
  */
 function spodoosync_civicrm_custom($op,$groupID, $entityID, &$params ) {
+  $communicatie_group_id = civicrm_api3('CustomGroup', 'getvalue', array('return' => 'id', 'name' => 'communicatie'));
   if (spodoosync_paymentarrangement()) {  
     //check if the group if the Payment arrangement group
     $config = CRM_Paymentarrangement_Config::singleton();
@@ -49,6 +50,11 @@ function spodoosync_civicrm_custom($op,$groupID, $entityID, &$params ) {
       $objects = CRM_Odoosync_Objectlist::singleton();
       $objects->post($op,'civicrm_contact', $entityID);
     }
+  }
+  if ($groupID == $communicatie_group_id) {
+    $op = 'edit'; //if this custom field is deleted it doesn't mean that the contact is deleted.
+    $objects = CRM_Odoosync_Objectlist::singleton();
+    $objects->post($op,'civicrm_contact', $entityID);
   }
 }
 
@@ -91,7 +97,7 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
     $geenpost_reden = '';
     $geenpost_dao = CRM_Core_DAO::executeQuery("SELECT geen_post, reden_geen_post FROM civicrm_value_communicatie WHERE entity_id = %1", array(1=>$entity_id, 'Integer'));
     if ($geenpost_dao->fetch()) {
-      if ($geenpost_dao->geen_post) {
+      if ($geenpost_dao->geen_post == CRM_Core_DAO::VALUE_SEPARATOR.'1'.CRM_Core_DAO::VALUE_SEPARATOR) {
         $geenpost = true;
       }
       if ($geenpost_dao->reden_geen_post) {
