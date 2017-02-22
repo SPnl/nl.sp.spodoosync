@@ -95,7 +95,7 @@ function spodoosync_civicrm_odoo_alter_parameters(&$parameters, $resource, $enti
     // Sync field geen_post and reden_geen_post
     $geenpost = false;
     $geenpost_reden = '';
-    $geenpost_dao = CRM_Core_DAO::executeQuery("SELECT geen_post, reden_geen_post FROM civicrm_value_communicatie WHERE entity_id = %1", array(1=>$entity_id, 'Integer'));
+    $geenpost_dao = CRM_Core_DAO::executeQuery("SELECT geen_post, reden_geen_post FROM civicrm_value_communicatie WHERE entity_id = %1", array(1=>array($entity_id, 'Integer')));
     if ($geenpost_dao->fetch()) {
       if ($geenpost_dao->geen_post == CRM_Core_DAO::VALUE_SEPARATOR.'1'.CRM_Core_DAO::VALUE_SEPARATOR) {
         $geenpost = true;
