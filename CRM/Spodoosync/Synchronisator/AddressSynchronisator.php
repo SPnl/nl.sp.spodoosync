@@ -12,12 +12,8 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
     if ($odoo_partner_id <= 0) {
       return false;
     }
-    
-    //only sync primary addresses
-    if ($address['is_primary']) {
-      return true;
-    }
-    
+
+    // Only sync invoice address
     $type = CRM_Spodoosync_LocationTypeToOdooType::getOdooType($address['location_type_id']);
     if ($type !== false) {
       return true;
