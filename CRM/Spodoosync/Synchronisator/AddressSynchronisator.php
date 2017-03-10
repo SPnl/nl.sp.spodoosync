@@ -33,27 +33,6 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
    * @throws Exception
    */
   public function performInsert(CRM_Odoosync_Model_OdooEntity $sync_entity) {
-    //only insert the record when the type parameter is set
-    $address = $this->getAddress($sync_entity->getEntityId());
-    $parameters = $this->getOdooParameters($address, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'create');
-    if (isset($parameters['type'])) {
-      //add parent id to the parameters
-      $parent_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $address['contact_id']);
-      $type_name = CRM_Spodoosync_LocationTypeToOdooType::getOdooDisplayName($address['location_type_id'], $address['contact_id']);
-      
-      $parameters['parent_id'] = new xmlrpcval($parent_id, 'int');
-      $parameters['name'] = new xmlrpcval($type_name, 'string');
-      
-      $odoo_id = $this->connector->create($this->getOdooResourceType(), $parameters);
-      if ($odoo_id) {
-        $sync_entity->setOdooField($parameters['type']->scalarval());
-        return $odoo_id;
-      }
-      
-      throw new Exception('Could not insert non-primary address into Odoo');
-    }
-    
-    
     //an insert is impossible because we only insert valid address types and we 
     //update primary addresses at partner level
     //and store them at the partner entity in Odoo
@@ -64,8 +43,10 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
   /**
    * Update an existing contact in Odoo
    * 
-   * @param type $odoo_id
-   * @param CRM_Odoosync_Model_OdooEntity $sync_entit
+   * @param int $orig_odoo_id
+   * @param CRM_Odoosync_Model_OdooEntity $sync_entity
+   * @return int
+   * @throws Exception
    */
   public function performUpdate($orig_odoo_id, CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $odoo_id = $this->findOdooId($sync_entity);
@@ -76,9 +57,6 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
     $address = $this->getAddress($sync_entity->getEntityId());
     $parameters = $this->getOdooParameters($address, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'write');
     if ($this->connector->write($this->getOdooResourceType(), $odoo_id, $parameters)) {
-      if (isset($parameters['type'])) {
-        $sync_entity->setOdooField($parameters['type']->scalarval());
-      }
       return $odoo_id;
     }
     throw new Exception("Could not update partner in Odoo");
@@ -121,21 +99,7 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
   public function findOdooId(CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $address = $this->getAddress($sync_entity->getEntityId());
     $contact_id = $address['contact_id'];
-    $odoo_id = false;
-
-    //look up the partner id if address is primary
-    if ($address['is_primary']) {
-      $odoo_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $contact_id);
-    } else {
-      //this is valid odoo address type find the odoo id for this type 
-      //search for a partnert with this type and which is linked to the contact
-      $parent_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $contact_id);
-      $type = CRM_Spodoosync_LocationTypeToOdooType::getOdooType($address['location_type_id']);
-      if ($parent_id !== false && $type !== false) {
-        $odoo_id = CRM_Spodoosync_LocationTypeToOdooType::getOdooIdByTypeAndParent($type, $parent_id);
-      }
-    }
-    
+    $odoo_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $contact_id);
     if ($odoo_id != $sync_entity->getOdooId()) {
       $this->clearAddressInOdoo($sync_entity, $address); 
     }      
@@ -144,14 +108,6 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
   
   protected function getOdooParameters($address, $entity, $entity_id, $action) {
     $parameters = parent::getOdooParameters($address, $entity, $entity_id, $action);
-    
-    if (empty($address['is_primary']) && !empty($address['location_type_id'])) {
-      $type = CRM_Spodoosync_LocationTypeToOdooType::getOdooType($address['location_type_id']);
-      if ($type) {
-        $parameters['type'] = new xmlrpcval($type, 'string');
-      }
-    }
-    
     return $parameters;
   }
   
