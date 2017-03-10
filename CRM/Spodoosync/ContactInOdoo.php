@@ -29,7 +29,7 @@ class CRM_Spodoosync_ContactInOdoo {
 
     // check if left contact has "sync with odoo = yes"
     if (CRM_Spodoosync_ContactInOdoo::checkContactInOdoo($self->_oid)) {
-      $errors['_qf_default'] = ts("Het contact aan de linkerkant bestaat in Odoo. Samenvoegen niet toegelaten!");
+      $errors['_qf_default'] = ts("Het contact aan de linkerkant bestaat in Odoo. Samenvoegen niet toegestaan!");
     }
 
     return $errors;
