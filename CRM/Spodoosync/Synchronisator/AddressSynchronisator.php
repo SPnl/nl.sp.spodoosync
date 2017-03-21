@@ -92,12 +92,34 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
    * @throws Exception
    */
   public function performDelete($odoo_id, CRM_Odoosync_Model_OdooEntity $sync_entity) {
+    // Check whether the contact has an invoice address and whether the invoice address differs from the address we
+    // want to delete. Only clear address when an contact does not have an invoice address.
     $address = array();
     if (!empty($sync_entity->getOdooId()) && $sync_entity->getOdooId() > 0) {
-      $odoo_id = $sync_entity->getOdooId();
-      $parameters = $this->getOdooParameters($address, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'clear');
-      if (!$this->connector->write($this->getOdooResourceType(), $odoo_id, $parameters)) {
-        throw new Exception('Could not clear address in Odoo');
+      $odoo_id = false;
+      $contact_id = false;
+      // Fin the contact ID
+      $civicrm_odoo_entities = $sync_entity->findByOdooIdAndField('res.partner', $sync_entity->getOdooId());
+      foreach ($civicrm_odoo_entities as $civicrm_odoo_entity) {
+        if ($civicrm_odoo_entity['entity'] == 'civicrm_contact') {
+          $contact_id = $civicrm_odoo_entity['entity_id'];
+          $odoo_id = $civicrm_odoo_entity['odoo_id'];
+        }
+      }
+
+      if (!$contact_id || !$odoo_id) {
+        return;
+      }
+
+      $invoiceAddressLocationTtypeId = civicrm_api3('LocationType', 'getvalue', array('name' => 'Billing', 'return' => 'id'));
+      try {
+        $invoice_address = civicrm_api3('Address', 'getsingle', array('contact_id' => $contact_id, 'location_type_id' => $invoiceAddressLocationTtypeId));
+      } catch(Exception $e) {
+        // No invoice address found. So we could safely empty the current address in Odoo.
+        $parameters = $this->getOdooParameters($address, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'clear');
+        if (!$this->connector->write($this->getOdooResourceType(), $odoo_id, $parameters)) {
+          throw new Exception('Could not clear address in Odoo');
+        }
       }
     }
 
