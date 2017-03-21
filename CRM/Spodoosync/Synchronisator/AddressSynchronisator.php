@@ -92,26 +92,8 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
    * @throws Exception
    */
   public function performDelete($odoo_id, CRM_Odoosync_Model_OdooEntity $sync_entity) {
-    $objAdress = new CRM_Core_BAO_Address();
     $address = array();
-    CRM_Core_DAO::storeValues($objAdress, $address);
-
-    // Only sync invoice address
-    $type = CRM_Spodoosync_LocationTypeToOdooType::getOdooType($address['location_type_id']);
-    if ($type === false) {
-      return;
-    }
-
-    //adress is not syncable, clear address of partner if item is already synced intoo Odoo
     if (!empty($sync_entity->getOdooId()) && $sync_entity->getOdooId() > 0) {
-      $ignoreFields = array('is_primary', 'id');
-      foreach($address as $field => $val) {
-        if (in_array($field, $ignoreFields)) {
-          continue;
-        }
-        $address[$field] = '';
-      }
-
       $odoo_id = $sync_entity->getOdooId();
       $parameters = $this->getOdooParameters($address, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'clear');
       if (!$this->connector->write($this->getOdooResourceType(), $odoo_id, $parameters)) {
