@@ -99,7 +99,7 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
       $odoo_id = false;
       $contact_id = false;
       // Fin the contact ID
-      $civicrm_odoo_entities = $sync_entity->findByOdooIdAndField('res.partner', $sync_entity->getOdooId());
+      $civicrm_odoo_entities = $sync_entity->findByOdooIdAndField('res.partner', $sync_entity->getOdooId(), '');
       foreach ($civicrm_odoo_entities as $civicrm_odoo_entity) {
         if ($civicrm_odoo_entity['entity'] == 'civicrm_contact') {
           $contact_id = $civicrm_odoo_entity['entity_id'];
