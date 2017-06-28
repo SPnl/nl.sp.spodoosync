@@ -14,7 +14,7 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
     }
     
     //only sync primary addresses
-    if ($address['is_primary']) {
+    if ($address['is_billing']) {
       return true;
     }
     
@@ -128,7 +128,7 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
     $odoo_id = false;
 
     //look up the partner id if address is primary
-    if ($address['is_primary']) {
+    if ($address['is_billing']) {
       $odoo_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $contact_id);
     } else {
       //this is valid odoo address type find the odoo id for this type 
@@ -149,7 +149,7 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
   protected function getOdooParameters($address, $entity, $entity_id, $action) {
     $parameters = parent::getOdooParameters($address, $entity, $entity_id, $action);
     
-    if (empty($address['is_primary']) && !empty($address['location_type_id'])) {
+    if (empty($address['is_billing']) && !empty($address['location_type_id'])) {
       $type = CRM_Spodoosync_LocationTypeToOdooType::getOdooType($address['location_type_id']);
       if ($type) {
         $parameters['type'] = new xmlrpcval($type, 'string');
