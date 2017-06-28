@@ -44,7 +44,9 @@ class CRM_Spodoosync_LocationTypeToOdooType {
   
   protected static function getValidOdooTypes() {
     return array(
-      'Billing' => 'default',
+      'Home' => 'default',
+      'Billing' => 'invoice',
+      'Other' => 'other',
     );
   }
   

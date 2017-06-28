@@ -12,8 +12,12 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
     if ($odoo_partner_id <= 0) {
       return false;
     }
-
-    // Only sync invoice address
+    
+    //only sync primary addresses
+    if ($address['is_primary']) {
+      return true;
+    }
+    
     $type = CRM_Spodoosync_LocationTypeToOdooType::getOdooType($address['location_type_id']);
     if ($type !== false) {
       return true;
@@ -33,6 +37,27 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
    * @throws Exception
    */
   public function performInsert(CRM_Odoosync_Model_OdooEntity $sync_entity) {
+    //only insert the record when the type parameter is set
+    $address = $this->getAddress($sync_entity->getEntityId());
+    $parameters = $this->getOdooParameters($address, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'create');
+    if (isset($parameters['type'])) {
+      //add parent id to the parameters
+      $parent_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $address['contact_id']);
+      $type_name = CRM_Spodoosync_LocationTypeToOdooType::getOdooDisplayName($address['location_type_id'], $address['contact_id']);
+      
+      $parameters['parent_id'] = new xmlrpcval($parent_id, 'int');
+      $parameters['name'] = new xmlrpcval($type_name, 'string');
+      
+      $odoo_id = $this->connector->create($this->getOdooResourceType(), $parameters);
+      if ($odoo_id) {
+        $sync_entity->setOdooField($parameters['type']->scalarval());
+        return $odoo_id;
+      }
+      
+      throw new Exception('Could not insert non-primary address into Odoo');
+    }
+    
+    
     //an insert is impossible because we only insert valid address types and we 
     //update primary addresses at partner level
     //and store them at the partner entity in Odoo
@@ -43,10 +68,8 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
   /**
    * Update an existing contact in Odoo
    * 
-   * @param int $orig_odoo_id
-   * @param CRM_Odoosync_Model_OdooEntity $sync_entity
-   * @return int
-   * @throws Exception
+   * @param type $odoo_id
+   * @param CRM_Odoosync_Model_OdooEntity $sync_entit
    */
   public function performUpdate($orig_odoo_id, CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $odoo_id = $this->findOdooId($sync_entity);
@@ -57,6 +80,9 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
     $address = $this->getAddress($sync_entity->getEntityId());
     $parameters = $this->getOdooParameters($address, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'write');
     if ($this->connector->write($this->getOdooResourceType(), $odoo_id, $parameters)) {
+      if (isset($parameters['type'])) {
+        $sync_entity->setOdooField($parameters['type']->scalarval());
+      }
       return $odoo_id;
     }
     throw new Exception("Could not update partner in Odoo");
@@ -78,51 +104,14 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
     if (!$is_synced && strlen($sync_entity->getOdooField()) && $sync_entity->getOdooId() && $sync_entity->getOdooId() != $parent_id) {
       //remove address/partner if it is not the main contact
       $this->connector->unlink($this->getOdooResourceType(), $sync_entity->getOdooId());
+    } elseif (!$is_synced) {
+      //clear address on res.partner
+      parent::clearAddressInOdoo($sync_entity, $address);
     }
+    
     //set odoo field to empty because this item is not syncable due to an invalid odoo type
     //we use the odoo_field to store the current address type
     $sync_entity->setOdooField('');
-  }
-
-  /**
-   * Delete contact from Odoo
-   *
-   * @param type $odoo_id
-   * @param CRM_Odoosync_Model_OdooEntity $sync_entity
-   * @throws Exception
-   */
-  public function performDelete($odoo_id, CRM_Odoosync_Model_OdooEntity $sync_entity) {
-    // Check whether the contact has an invoice address and whether the invoice address differs from the address we
-    // want to delete. Only clear address when an contact does not have an invoice address.
-    $address = array();
-    if (!empty($sync_entity->getOdooId()) && $sync_entity->getOdooId() > 0) {
-      $odoo_id = false;
-      $contact_id = false;
-      // Fin the contact ID
-      $civicrm_odoo_entities = $sync_entity->findByOdooIdAndField('res.partner', $sync_entity->getOdooId(), '');
-      foreach ($civicrm_odoo_entities as $civicrm_odoo_entity) {
-        if ($civicrm_odoo_entity['entity'] == 'civicrm_contact') {
-          $contact_id = $civicrm_odoo_entity['entity_id'];
-          $odoo_id = $civicrm_odoo_entity['odoo_id'];
-        }
-      }
-
-      if (!$contact_id || !$odoo_id) {
-        return;
-      }
-
-      $invoiceAddressLocationTtypeId = civicrm_api3('LocationType', 'getvalue', array('name' => 'Billing', 'return' => 'id'));
-      try {
-        $invoice_address = civicrm_api3('Address', 'getsingle', array('contact_id' => $contact_id, 'location_type_id' => $invoiceAddressLocationTtypeId));
-      } catch(Exception $e) {
-        // No invoice address found. So we could safely empty the current address in Odoo.
-        $parameters = $this->getOdooParameters($address, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'clear');
-        if (!$this->connector->write($this->getOdooResourceType(), $odoo_id, $parameters)) {
-          throw new Exception('Could not clear address in Odoo');
-        }
-      }
-    }
-
   }
   
   /**
@@ -136,7 +125,21 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
   public function findOdooId(CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $address = $this->getAddress($sync_entity->getEntityId());
     $contact_id = $address['contact_id'];
-    $odoo_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $contact_id);
+    $odoo_id = false;
+
+    //look up the partner id if address is primary
+    if ($address['is_primary']) {
+      $odoo_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $contact_id);
+    } else {
+      //this is valid odoo address type find the odoo id for this type 
+      //search for a partnert with this type and which is linked to the contact
+      $parent_id = $sync_entity->findOdooIdByEntity('civicrm_contact', $contact_id);
+      $type = CRM_Spodoosync_LocationTypeToOdooType::getOdooType($address['location_type_id']);
+      if ($parent_id !== false && $type !== false) {
+        $odoo_id = CRM_Spodoosync_LocationTypeToOdooType::getOdooIdByTypeAndParent($type, $parent_id);
+      }
+    }
+    
     if ($odoo_id != $sync_entity->getOdooId()) {
       $this->clearAddressInOdoo($sync_entity, $address); 
     }      
@@ -145,6 +148,14 @@ class CRM_Spodoosync_Synchronisator_AddressSynchronisator extends CRM_OdooContac
   
   protected function getOdooParameters($address, $entity, $entity_id, $action) {
     $parameters = parent::getOdooParameters($address, $entity, $entity_id, $action);
+    
+    if (empty($address['is_primary']) && !empty($address['location_type_id'])) {
+      $type = CRM_Spodoosync_LocationTypeToOdooType::getOdooType($address['location_type_id']);
+      if ($type) {
+        $parameters['type'] = new xmlrpcval($type, 'string');
+      }
+    }
+    
     return $parameters;
   }
   
