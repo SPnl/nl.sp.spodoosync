@@ -51,11 +51,13 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
     $contact = $this->getContact($sync_entity->getEntityId());
     $parameters = $this->getOdooParameters($contact, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'write');
 
-    $partner = $this->connector->read('res.partner', $odoo_id);
-    $currentCategories = $partner->category->scalarval();
     $currentCategoryIds = array();
-    foreach($currentCategories as $currentCategory) {
-      $currentCategoryIds[] = $currentCategory->scalarval();
+    $partner = $this->connector->read('res.partner', $odoo_id);
+    if (!empty($partner->category)) {
+      $currentCategories = $partner->category->scalarval();
+      foreach ($currentCategories as $currentCategory) {
+        $currentCategoryIds[] = $currentCategory->scalarval();
+      }
     }
     $parameters['category_id'] = new xmlrpcval($this->addLabels($contact, $currentCategoryIds), 'array');
 
