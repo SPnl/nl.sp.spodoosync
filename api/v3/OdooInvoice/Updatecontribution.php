@@ -10,6 +10,8 @@
  */
 function _civicrm_api3_odoo_invoice_updatecontribution_spec(&$spec) {
   $spec['id']['api.required'] = 1;
+  $spec['invoice_id']['api.required'] = 1;
+  $spec['contribution_status_id']['api.required'] = 1;
 }
 
 /**
@@ -23,20 +25,18 @@ function _civicrm_api3_odoo_invoice_updatecontribution_spec(&$spec) {
  * @see civicrm_api3_create_success
  */
 function civicrm_api3_odoo_invoice_updatecontribution($params) {
-  $values = array();
-  _civicrm_api3_custom_format_params($params, $values, 'Contribution');
-  $params = array_merge($params, $values);
-
-  //legacy soft credit handling - recommended approach is chaining
-  if(!empty($params['soft_credit_to'])){
-    $params['soft_credit'] = array(array(
-      'contact_id' => $params['soft_credit_to'],
-      'amount' => $params['total_amount']));
+  $status = CRM_Contribute_PseudoConstant::contributionStatus();
+  if (!isset($status[$params['contribution_status_id']])) {
+    return civicrm_api3_create_error('Invalid contribution status');
   }
 
-  $contribution = civicrm_api3('Contribution', 'getsingle', array('id' => $params['id']));
-  $params['financial_type_id'] = $contribution['financial_type_id'];
+  // Update the status and invoice_id directly in the database to prevent a resync of the contribution to odoo.
+  $sql = "UPDATE civicrm_contribution SET invoice_id = %1, contribution_status_id = %2 WHERE id = %3";
+  $sqlParams[1] = array($params['invoice_id'], 'String');
+  $sqlParams[2] = array($params['contribution_status_id'], 'Integer');
+  $sqlParams[3] = array($params['id'], 'Integer');
+  CRM_Core_DAO::executeQuery($sql, $sqlParams);
 
-  return _civicrm_api3_basic_create('CRM_Contribute_BAO_Contribution', $params, 'Contribution');
+  return civicrm_api3('Contribution', 'getsingle', array('id' => $params['id']));
 }
 
