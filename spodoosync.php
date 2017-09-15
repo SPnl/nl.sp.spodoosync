@@ -228,6 +228,25 @@ function spodoosync_civicrm_buildForm($formName, &$form) {
     // add a form validation rule when contacts are merged
     $form->addFormRule(array('CRM_Spodoosync_ContactInOdoo', 'mergeFormRule'), $form);
   }
+	
+	// Set invoice_address checkbox to checked when the first address is added
+	if ($formName == 'CRM_Contact_Form_Contact' && $form->_action == CRM_Core_Action::ADD && !$form->_contactId) {
+		// This form is used for a new contact;
+		$defaults['address'][1]['is_billing'] = TRUE;
+		$form->setDefaults($defaults);
+	}
+	if ($formName == 'CRM_Contact_Form_Inline_Address' && $form->_action == CRM_Core_Action::ADD) {
+		// If we add a new address and this is the first address set the is_billing to one.
+		$defaults = $form->getVar('_values');
+		if (empty($defaults['address'])) {
+			// We can only retrieve the location number from the REQUEST variable. It is set on the form class as a private property.
+			$locBlockNo = CRM_Utils_Request::retrieve('locno', 'Positive', CRM_Core_DAO::$_nullObject, TRUE, NULL, $_REQUEST);
+			if ($locBlockNo == 1) {
+				$newDefaults['address'][1]['is_billing'] = 1;
+				$form->setDefaults($newDefaults);
+			}
+		}
+	}
 }
 
 function spodoosync_civicrm_validateForm($formName, &$fields, &$files, &$form, &$errors) {
