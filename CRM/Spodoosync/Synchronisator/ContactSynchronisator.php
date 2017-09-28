@@ -278,7 +278,6 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
       if (isset($tagsToLabels[$current_tag['tag_id']])) {
         $labels[] = new xmlrpcval(array(
             new xmlrpcval(4, "int"),// 4 : add link
-            new xmlrpcval(0, "int"), 
             new xmlrpcval($tagsToLabels[$current_tag['tag_id']],"int")
             ),
         "array" ); 
@@ -288,7 +287,6 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
 		foreach($tagsToLabels as $label_id) {
 			$labels[] = new xmlrpcval(array(
             new xmlrpcval(3, "int"),// 3 : remove link
-            new xmlrpcval(0, "int"), 
             new xmlrpcval($label_id,"int")
             ),
         "array" ); 
