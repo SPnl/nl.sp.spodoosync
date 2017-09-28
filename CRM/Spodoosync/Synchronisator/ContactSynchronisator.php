@@ -240,6 +240,20 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
     }
     return $label_id;
   }
+	
+	public static function synchronisableTags() {
+		$tags = array('jaap' => 'jaap');
+		$tag_ids = array();
+		foreach($tags as $tag => $label) {
+			try {
+				$tag_id = civicrm_api3('Tag', 'getvalue', array('name' => $tag, 'return' => 'id'));
+				$tag_ids[$tag_id] = $label;
+			} catch (Exception $e) {
+				// Do nothing.
+			}			
+		}
+		return $tag_ids;
+	}
 
   /**
    * Returns what the label in Odoo should be for the given tag
@@ -249,11 +263,8 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
   private static function tagsToLabels() {
     if (!self::$tagIdsToLabels) {
       self::$tagIdsToLabels = array();
-      $tagsToLabels = array(
-        'jaap' => 'jaap'
-      );
-      foreach ($tagsToLabels as $tag => $label) {
-        $tag_id = civicrm_api3('Tag', 'getvalue', array('name' => $tag, 'return' => 'id'));
+      $tagsToLabels = self::synchronisableTags();
+      foreach ($tagsToLabels as $tag_id => $label) {
         $label_id = self::findAndCreateLabel($label);
         if ($label_id) {
           self::$tagIdsToLabels[$tag_id] = $label_id;

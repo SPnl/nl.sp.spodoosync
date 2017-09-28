@@ -2,6 +2,23 @@
 
 require_once 'spodoosync.civix.php';
 
+/** 
+ * Implementation of hook_civicrm_post
+ * 
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_post
+ */
+function spodoosync_civicrm_post($op,$objectName, $objectId, &$objectRef) {
+	if ($objectName == 'EntityTag' && $objectRef[1] == 'civicrm_contact') {
+		$tags = CRM_Spodoosync_Synchronisator_ContactSynchronisator::synchronisableTags();
+		if (isset($tags[$objectId])) {
+			foreach($objectRef[0] as $contact_id) {
+				$objects = CRM_Odoosync_Objectlist::singleton();
+  			$objects->post('create','civicrm_contact', $contact_id);
+			}
+		}
+	}
+}
+
 /**
  * Implementation of hook_civicrm_odoo_object_definition
  * 
