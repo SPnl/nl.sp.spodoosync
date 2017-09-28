@@ -242,7 +242,12 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
   }
 	
 	public static function synchronisableTags() {
-		$tags = array('jaap' => 'jaap');
+		$tags = array(
+			'In Oprichting' => 'Afdeling - in oprichting',
+			'Erkend' => 'Afdeling - erkend',
+			'Opgeheven' => 'Afdeling - opgeheven',
+			'Werkgroep' => 'Werkgroep',
+		);
 		$tag_ids = array();
 		foreach($tags as $tag => $label) {
 			try {
