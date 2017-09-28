@@ -30,9 +30,7 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
   public function performInsert(CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $contact = $this->getContact($sync_entity->getEntityId());
     $parameters = $this->getOdooParameters($contact, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'create');
-
-    $currentCategoryIds = array();
-    $parameters['category_id'] = new xmlrpcval($this->addLabels($contact, $currentCategoryIds), 'array');
+		$parameters = $this->addCategoryParameters($parameters, $sync_entity, $odoo_id);
 
     $odoo_id = $this->connector->create($this->getOdooResourceType(), $parameters);
     if ($odoo_id) {
@@ -50,21 +48,34 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
   public function performUpdate($odoo_id, CRM_Odoosync_Model_OdooEntity $sync_entity) {
     $contact = $this->getContact($sync_entity->getEntityId());
     $parameters = $this->getOdooParameters($contact, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'write');
-
-    $currentCategoryIds = array();
-    $partner = $this->connector->read('res.partner', $odoo_id);
-    if (!empty($partner->category)) {
-      $currentCategories = $partner->category->scalarval();
-      foreach ($currentCategories as $currentCategory) {
-        $currentCategoryIds[] = $currentCategory->scalarval();
-      }
-    }
-    $parameters['category_id'] = new xmlrpcval($this->addLabels($contact, $currentCategoryIds), 'array');
-
+		$parameters = $this->addCategoryParameters($parameters, $sync_entity, $odoo_id);
+  
     if ($this->connector->write($this->getOdooResourceType(), $odoo_id, $parameters)) {
       return $odoo_id;
     }
     throw new Exception('Could not update contact into Odoo');
+  }
+
+	protected function addCategoryParameters($parameters, CRM_Odoosync_Model_OdooEntity $sync_entity, $odoo_id) {
+		$currentCategoryIds = array();
+		if ($odoo_id) {
+    	$partner = $this->connector->read('res.partner', $odoo_id);
+    	if (!empty($partner->category)) {
+      	$currentCategories = $partner->category->scalarval();
+      	foreach ($currentCategories as $currentCategory) {
+        	$currentCategoryIds[] = $currentCategory->scalarval();
+      	}
+    	}
+		}
+    $parameters['category_id'] = new xmlrpcval($this->addLabels($contact, $currentCategoryIds), 'array');
+		return $parameters;
+	}
+
+	public function getSyncData(\CRM_Odoosync_Model_OdooEntity $sync_entity, $odoo_id) {
+    $contact = $this->getContact($sync_entity->getEntityId());
+    $parameters = $this->getOdooParameters($contact, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'write');
+		$parameters = $this->addCategoryParameters($parameters, $sync_entity, $odoo_id);
+    return $parameters;
   }
 
   /**
