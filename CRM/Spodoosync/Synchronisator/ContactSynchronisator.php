@@ -19,64 +19,12 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
 
     return true;
   }
-
-  /**
-   * Insert a new Contact into Odoo
-   *
-   * @param CRM_Odoosync_Model_OdooEntity $sync_entity
-   * @return type
-   * @throws Exception
-   */
-  public function performInsert(CRM_Odoosync_Model_OdooEntity $sync_entity) {
-    $contact = $this->getContact($sync_entity->getEntityId());
-    $parameters = $this->getOdooParameters($contact, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'create');
-		$parameters = $this->addCategoryParameters($parameters, $sync_entity, $odoo_id);
-
-    $odoo_id = $this->connector->create($this->getOdooResourceType(), $parameters);
-    if ($odoo_id) {
-      return $odoo_id;
-    }
-    throw new Exception('Could not insert contact into Odoo');
-  }
-
-  /**
-   * Update an existing contact in Odoo
-   *
-   * @param type $odoo_id
-   * @param CRM_Odoosync_Model_OdooEntity $sync_entit
-   */
-  public function performUpdate($odoo_id, CRM_Odoosync_Model_OdooEntity $sync_entity) {
-    $contact = $this->getContact($sync_entity->getEntityId());
-    $parameters = $this->getOdooParameters($contact, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'write');
-		$parameters = $this->addCategoryParameters($parameters, $sync_entity, $odoo_id);
-  
-    if ($this->connector->write($this->getOdooResourceType(), $odoo_id, $parameters)) {
-      return $odoo_id;
-    }
-    throw new Exception('Could not update contact into Odoo');
-  }
-
-	protected function addCategoryParameters($parameters, CRM_Odoosync_Model_OdooEntity $sync_entity, $odoo_id) {
-		$currentCategoryIds = array();
-		if ($odoo_id) {
-    	$partner = $this->connector->read('res.partner', $odoo_id);
-    	if (!empty($partner->category)) {
-      	$currentCategories = $partner->category->scalarval();
-      	foreach ($currentCategories as $currentCategory) {
-        	$currentCategoryIds[] = $currentCategory->scalarval();
-      	}
-    	}
-		}
-    $parameters['category_id'] = new xmlrpcval($this->addLabels($contact, $currentCategoryIds), 'array');
+	
+	protected function getOdooParameters($contact, $entity, $entity_id, $action) {
+		$parameters = parent::getOdooParameters($contact, $entity, $entity_id, $action);
+		$parameters['category_id'] = new xmlrpcval($this->contactLabels($contact), 'array');
 		return $parameters;
 	}
-
-	public function getSyncData(\CRM_Odoosync_Model_OdooEntity $sync_entity, $odoo_id) {
-    $contact = $this->getContact($sync_entity->getEntityId());
-    $parameters = $this->getOdooParameters($contact, $sync_entity->getEntity(), $sync_entity->getEntityId(), 'write');
-		$parameters = $this->addCategoryParameters($parameters, $sync_entity, $odoo_id);
-    return $parameters;
-  }
 
   /**
    * Returns whether the field Contact in Odoo is set to yes.
@@ -322,30 +270,30 @@ class CRM_Spodoosync_Synchronisator_ContactSynchronisator extends CRM_OdooContac
    * @param $current_labels
    * @return array
    */
-  private function addLabels($contact, $current_labels) {
+  private function contactLabels($contact) {
     $tagsToLabels = self::tagsToLabels();
     $current_tags = civicrm_api3('EntityTag', 'get', array('entity_table' => 'civicrm_contact', 'entity_id' => $contact['id'], 'options' => array('limit' => 0)));
     $labels = array();
     foreach($current_tags['values'] as $current_tag) {
       if (isset($tagsToLabels[$current_tag['tag_id']])) {
-        $labels[] = $tagsToLabels[$current_tag['tag_id']];
+        $labels[] = new xmlrpcval(array(
+            new xmlrpcval(4, "int"),// 4 : add link
+            new xmlrpcval(0, "int"), 
+            new xmlrpcval($tagsToLabels[$current_tag['tag_id']],"int")
+            ),
+        "array" ); 
+				unset($tagsToLabels[$current_tag['tag_id']]);
       }
     }
-    foreach($current_labels as $label_id) {
-      if (in_array($label_id, $labels)) {
-        continue;
-      } elseif (in_array($label_id, $tagsToLabels)) {
-        continue;
-      }
-      $labels[] = $label_id;
-    }
-
-    $xmlRpcLabels = array();
-    foreach($labels as $label_id) {
-      $xmlRpcLabels[] = new xmlrpcval($label_id, 'int');
-    }
-
-    return $xmlRpcLabels;
+		foreach($tagsToLabels as $label_id) {
+			$labels[] = new xmlrpcval(array(
+            new xmlrpcval(3, "int"),// 3 : remove link
+            new xmlrpcval(0, "int"), 
+            new xmlrpcval($label_id,"int")
+            ),
+        "array" ); 
+		}
+    return $labels;
   }
 
   
