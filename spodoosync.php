@@ -3,6 +3,16 @@
 require_once 'spodoosync.civix.php';
 
 /** 
+ * Implementation of hook_civicrm_pre
+ * 
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_post
+ */
+function spodoosync_civicrm_pre($op,$objectName, $objectId, &$params) {
+  // Fix for SP issue #1641:
+  CRM_Spodoosync_FixEmptyInvoiceAddress::pre($op, $objectName, $objectId, $params);
+}
+
+/** 
  * Implementation of hook_civicrm_post
  * 
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_post
